@@ -1,0 +1,21 @@
+ {
+    "openrpcDocument": "openrpc.json",
+    "outDir": "build",
+    "components": [
+        {
+            "type": "client",
+            "name": "@manifoldfinance/json-rpc",
+            "language": "typescript"
+        },
+        {
+            "type": "client",
+            "name": "json-rpc",
+            "language": "rust"
+        },
+        {
+            "type": "docs",
+            "name": "json-rpc-specification-website",
+            "language": "gatsby"
+        }
+    ]
+}

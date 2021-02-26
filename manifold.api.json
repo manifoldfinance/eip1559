@@ -1,0 +1,561 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Manifold REST API",
+        "version": "0.0.1",
+        "description": "# Authentication\n\n",
+        "contact": {}
+    },
+    "servers": [
+        {
+            "url": "https://localhost:8000/api/v1/",
+            "description": "URL to the REST API"
+        }
+    ],
+    "tags": [
+        {
+            "name": "auth",
+            "description": "Authentication"
+        },
+        {
+            "name": "exchange",
+            "description": "Exchange"
+        },
+        {
+            "name": "user",
+            "description": "User"
+        },
+        {
+            "name": "market",
+            "description": "Market"
+        }
+    ],
+    "security": [
+        {
+            "SessionCookie": []
+        },
+        {
+            "CSRFToken": []
+        }
+    ],
+    "paths": {
+        "/auth/login": {
+            "post": {
+                "summary": "Logs a user in.",
+                "security": [
+                    {
+                        "CSRFToken": []
+                    }
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "username": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "User successfully logged in. The session ID is returned in a cookie.",
+                        "headers": {
+                            "Set-Cookie": {
+                                "schema": {
+                                    "type": "string",
+                                    "example": "uex_session=12345abc;"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authentication failed."
+                    }
+                },
+                "parameters": []
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "summary": "Logs a user out.",
+                "tags": [
+                    "auth"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "User successfully logged out."
+                    }
+                },
+                "parameters": []
+            }
+        },
+        "/auth/change_password": {
+            "post": {
+                "summary": "Changes a user's password.",
+                "description": "All sessions using the previous password will be logged out.",
+                "tags": [
+                    "auth"
+                ],
+                "security": [
+                    {
+                        "CSRFToken": []
+                    },
+                    {
+                        "SessionCookie": []
+                    },
+                    {
+                        "OTP": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "old_password": {
+                                        "type": "string"
+                                    },
+                                    "new_password": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "Password successfully changed.",
+                        "headers": {
+                            "Set-Cookie": {
+                                "schema": {
+                                    "type": "string",
+                                    "example": "uex_session=12345abc;"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Invalid password."
+                    }
+                },
+                "parameters": []
+            }
+        },
+        "/exchange/orders": {
+            "post": {
+                "summary": "Posts an order. Funds will be immediately debited.",
+                "tags": [
+                    "exchange"
+                ],
+                "security": [
+                    {
+                        "CSRFToken": []
+                    },
+                    {
+                        "SessionCookie": []
+                    },
+                    {
+                        "OTP": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OrderCreationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "Order successfully posted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderCreationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": []
+            },
+            "put": {
+                "summary": "Modifies an existing order. Funds will immediately debited if the quantity increases, or credited if the quantity decreases.",
+                "tags": [
+                    "exchange"
+                ],
+                "security": [
+                    {
+                        "CSRFToken": []
+                    },
+                    {
+                        "SessionCookie": []
+                    },
+                    {
+                        "OTP": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Order"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order successfully modified.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderCreationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": []
+            }
+        },
+        "/exchange/orders/{order_id}": {
+            "get": {
+                "summary": "Gets an order by its ID.",
+                "tags": [
+                    "exchange"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "order_id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true,
+                        "description": "Numeric ID of the order."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns the looked-up order.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderWithFills"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Order not found."
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Cancels an order by its ID.",
+                "tags": [
+                    "exchange"
+                ],
+                "security": [
+                    {
+                        "CSRFToken": []
+                    },
+                    {
+                        "SessionCookie": []
+                    },
+                    {
+                        "OTP": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "order_id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true,
+                        "description": "Numeric ID of the order."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order successfully cancelled.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BlockInclusionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Order is not owned by current user."
+                    },
+                    "404": {
+                        "description": "Order not found."
+                    },
+                    "422": {
+                        "description": "Order is already cancelled."
+                    }
+                }
+            }
+        },
+        "/exchange/orders/cancel": {
+            "post": {
+                "summary": "Cancels a group of orders.",
+                "tags": [
+                    "exchange"
+                ],
+                "security": [
+                    {
+                        "CSRFToken": []
+                    },
+                    {
+                        "SessionCookie": []
+                    },
+                    {
+                        "OTP": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "order_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Bulk cancel completed. Some response may have failed; see the response body itself to deal with individual errors.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "oneOf": [
+                                            {
+                                                "$ref": "#/components/schemas/BlockInclusionResponse"
+                                            },
+                                            {
+                                                "$ref": "#/components/schemas/BlockInclusionFailure"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": []
+            }
+        },
+        "/user/balance": {
+            "get": {
+                "summary": "Returns the user's balance across all supported chains.",
+                "tags": [
+                    "user"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The user's balances.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Balance"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": []
+            }
+        },
+        "/user/orders": {
+            "get": {
+                "summary": "Gets all orders created by this user.",
+                "tags": [
+                    "user"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Start"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The user's orders.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "next_id": {
+                                            "type": "string"
+                                        },
+                                        "orders": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OrderWithFills"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/fills": {
+            "get": {
+                "summary": "Gets all fills relevant to this user.",
+                "tags": [
+                    "user"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/StartBlock"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EndBlock"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The user's fills.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "fills": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Fill"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/send": {
+            "post": {
+                "summary": "Transfers Funds",
+                "tags": [
+                    "user"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "to": {
+                                        "type": "string"
+                                    },
+                                    "amount": {
+                                        "type": "string"
+                                    },
+                                    "asset_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status of the transfer.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/BlockInclusionResponse"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": []
+            }
+        },
+        "/user/withdrawals": {
+            "post": {
+                "summary": "Initiates a withdrawal of a cleared asset.",
+                "tags": [
+                    "user"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "beneficiary": {
+                                        "type": "string",
+                                        "description": "The address of the recipient who will unlock funds on the MEV. Hex-encoded."
+                                    },
+                                    "asset_id": {
+                                        "type": "string",
+                                        "description": "The ID of the cleared asset to be withdrawn."
+                                    },
+                                    "quantity": {
+                                        "type": "string",
+                                        "description": "The amount of the cleared asset to withdraw, as represented in the asset's base units."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": []
+            }
+        }
+    },
+    "components": {
+        "links": {},
+        "callbacks": {},
+        "schemas": {}
+    }
+}
