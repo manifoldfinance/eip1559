@@ -1,4 +1,4 @@
- {
+{
   "openrpc": "1.0.0",
   "info": {
     "version": "1.0.10",
@@ -1129,11 +1129,7 @@
         "title": "blockNumberTag",
         "type": "string",
         "description": "The optional block height description",
-        "enum": [
-          "earliest",
-          "latest",
-          "pending"
-        ]
+        "enum": ["earliest", "latest", "pending"]
       },
       "BlockOrNull": {
         "title": "blockOrNull",
@@ -1465,11 +1461,7 @@
       "Transaction": {
         "title": "transaction",
         "type": "object",
-        "required": [
-          "gas",
-          "gasPrice",
-          "nonce"
-        ],
+        "required": ["gas", "gasPrice", "nonce"],
         "properties": {
           "blockHash": {
             "$ref": "#/components/schemas/BlockHashOrNull"
